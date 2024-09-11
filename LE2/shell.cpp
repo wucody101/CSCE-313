@@ -12,6 +12,7 @@ int main () {
 
     // TODO: add functionality
     // Create pipe
+    int pipefd[2];
 
     // Create child to run first command
     // In child, redirect output to write end of pipe
