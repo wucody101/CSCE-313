@@ -14,15 +14,41 @@ int main () {
     // Create pipe
     int pipefd[2];
 
+    if (pipe(pipefd) == -1) {
+        return 0;
+    }
+
     // Create child to run first command
-    // In child, redirect output to write end of pipe
-    // Close the read end of the pipe on the child side.
-    // In child, execute the command
+    int pid1 = fork();
+    if (pid1 == 0) {
+        // In child, redirect output to write end of pipe
+        dup2(pipefd[1], STDOUT_FILENO);
+
+        // Close the read end of the pipe on the child side.
+        close(pipefd[0]);
+        close(pipefd[1]);
+
+        // In child, execute the command
+        execvp(cmd1[0], cmd1);
+    }
 
     // Create another child to run second command
-    // In child, redirect input to the read end of the pipe
-    // Close the write end of the pipe on the child side.
-    // Execute the second command.
+    int pid2 = fork();
+    if (pid2 == 0) {
+        // In child, redirect input to the read end of the pipe
+        dup2(pipefd[0], STDIN_FILENO);
+
+        // Close the write end of the pipe on the child side.
+        close(pipefd[0]);
+        close(pipefd[1]);
+
+        // Execute the second command.
+        execvp(cmd2[0], cmd2);
+    }
 
     // Reset the input and output file descriptors of the parent.
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+    return 0;
 }
