@@ -157,7 +157,7 @@ int main (int argc, char *argv[]) {
 	bool f_Flag = false;
 
 	// Add other arguments here   |   Need to add -c, -m flags. BE CAREFUL OF getopt() NOTATION
-	while ((opt = getopt(argc, argv, "p:t:e:f:m:c:")) != -1) {
+	while ((opt = getopt(argc, argv, "p:t:e:f:m:c")) != -1) {
 		switch (opt) {
 			case 'p':
 				p = atoi (optarg);
@@ -204,7 +204,8 @@ int main (int argc, char *argv[]) {
 	else if (pid == 0) {
 		string mS = to_string(m); 
 		char* cmd[] = {(char*)"./server", (char*)"-m", (char*)mS.c_str(), (char*)NULL };
-		execl(cmd[0], (char*)cmd);
+		execvp(cmd[0], cmd);
+		exit(0);
 	}
 
     // Run server
@@ -217,7 +218,7 @@ int main (int argc, char *argv[]) {
 	// Set up FIFORequestChannel
     FIFORequestChannel chan("control", FIFORequestChannel::CLIENT_SIDE);
 	FIFORequestChannel* chan2 = nullptr;
-	chan2 = &chan;
+	FIFORequestChannel* data_channel = &chan;
 
 	// Task 4:
 	// Request a new channel (e.g. -c)
@@ -225,21 +226,24 @@ int main (int argc, char *argv[]) {
 	if (c_Flag) {
 		openChannel(chan, chan2);
 	}
+	if (chan2) {
+		data_channel = chan2;
+	}
 
 	// Task 2.1 + 2.2:
 	// Request data points
 	if (p != 1) {
 		if (t != 0.0) {
-			requestDataPoint(p, t, e, chan); // (e.g. './client -p 1 -t 0.000 -e 1')
+			requestDataPoint(p, t, e, *data_channel); // (e.g. './client -p 1 -t 0.000 -e 1')
 		}
 		else {
-			requestData(p, chan);	// (e.g. './client -p 1')
+			requestData(p, *data_channel);	// (e.g. './client -p 1')
 		} 
 	}
 	//Task 3:
 	//Request files (e.g. './client -f 1.csv')
 	else if (!filename.empty()) {
-		requestFile(filename, chan);
+		requestFile(filename, *data_channel);
 	}
 	
 	//Task 5:
